@@ -1,0 +1,35 @@
+# extra useless files
+OLD/
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+dist/
+build/
+*.egg
+
+# Virtual environments
+.venv/
+venv/
+env/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# ChromaDB / Vector store data
+chroma_data/
+*.db
+
+# Streamlit
+.streamlit/
+
+# Environment variables
+.env
