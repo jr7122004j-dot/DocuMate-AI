@@ -1,5 +1,6 @@
 # extra useless files
 OLD/
+.knowledge/
 
 # Python
 __pycache__/
