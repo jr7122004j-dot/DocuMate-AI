@@ -17,14 +17,12 @@ dependencies = [
     "langchain-ollama==1.0.1",
     "langchain-chroma==1.1.0",
     "langchain-text-splitters==1.1.1",
-    "langchain-classic==1.0.1",
     "pypdf",
     "streamlit",
     "chromadb",
     "ollama",
-    "scikit-learn",
     "numpy",
 ]
 
 [tool.hatch.build.targets.wheel]
-packages = ["src/main"]
+packages = ["src/documate_ai"]

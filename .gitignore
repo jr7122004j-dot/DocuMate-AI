@@ -27,9 +27,11 @@ Thumbs.db
 
 # ChromaDB / Vector store data
 chroma_data/
+chroma_db/
 *.db
 
-# Streamlit
+# Semantic cache
+cache/
 .streamlit/
 
 # Environment variables
