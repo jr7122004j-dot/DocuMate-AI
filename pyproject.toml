@@ -1,0 +1,44 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "DocuMate-AI"
+version = "0.1.0"
+description = "DocuMate-AI is an intelligent, on-device PDF analysis chatbot built with LangChain and Ollama, providing private, scalable document intelligence through semantic caching and pinpoint citations."
+readme = "README.md"
+requires-python = ">=3.10"
+license = { text = "MIT" }
+
+dependencies = [
+    "langchain~=1.2.0",
+    "langchain-core~=1.2.0",
+    "langchain-community~=0.4.0",
+    "langchain-ollama~=1.0.0",
+    "langchain-chroma~=1.1.0",
+    "langchain-text-splitters~=1.1.0",
+    "pypdf~=4.3.0",
+    "streamlit~=1.38.0",
+    "chromadb~=0.5.0",
+    "ollama~=0.3.0",
+    "numpy~=1.26.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest",
+    "pytest-cov",
+    "ruff",
+    "mypy",
+    "pre-commit",
+]
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/documate_ai"]
+
+[tool.pytest.ini_options]
+testpaths = ["test"]
+pythonpath = ["src"]
+markers = [
+    "ollama: requires a running Ollama server",
+]
