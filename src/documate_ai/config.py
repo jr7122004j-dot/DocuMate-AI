@@ -88,17 +88,54 @@ SOURCE_CONTENT_PREVIEW_LENGTH: int = 300
 # Question-detection heuristics
 # ---------------------------------------------------------------------------
 
-QUESTION_INDICATOR_WORDS: frozenset[str] = frozenset({
-    "what", "why", "how", "when", "where", "who", "which",
-    "whose", "whom", "is", "are", "was", "were", "will",
-    "can", "could", "should", "would", "do", "does", "did",
-})
+QUESTION_INDICATOR_WORDS: frozenset[str] = frozenset(
+    {
+        "what",
+        "why",
+        "how",
+        "when",
+        "where",
+        "who",
+        "which",
+        "whose",
+        "whom",
+        "is",
+        "are",
+        "was",
+        "were",
+        "will",
+        "can",
+        "could",
+        "should",
+        "would",
+        "do",
+        "does",
+        "did",
+    }
+)
 """Words that indicate a fragment is likely a question."""
 
-COMMON_STOP_WORDS: frozenset[str] = frozenset({
-    "what", "when", "where", "who", "how", "does", "is", "are",
-    "the", "and", "that", "this", "with", "for", "from", "have", "had",
-})
+COMMON_STOP_WORDS: frozenset[str] = frozenset(
+    {
+        "what",
+        "when",
+        "where",
+        "who",
+        "how",
+        "does",
+        "is",
+        "are",
+        "the",
+        "and",
+        "that",
+        "this",
+        "with",
+        "for",
+        "from",
+        "have",
+        "had",
+    }
+)
 """Stop words filtered out when computing question overlap scores."""
 
 MIN_MEANINGFUL_WORD_LENGTH: int = 3
@@ -112,7 +149,8 @@ QUESTION_OVERLAP_THRESHOLD: float = 0.5
 # ---------------------------------------------------------------------------
 
 CONDENSE_QUESTION_TEMPLATE: str = """
-Given the following conversation and a follow-up question, rephrase the follow-up question to be a standalone question.
+Given the following conversation and a follow-up question,
+rephrase the follow-up question to be a standalone question.
 Chat History: {chat_history}
 Follow-Up Question: {question}
 Standalone Question:"""

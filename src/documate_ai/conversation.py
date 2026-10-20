@@ -9,7 +9,7 @@ each sub-question independently.
 from __future__ import annotations
 
 import logging
-from typing import Any, TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 from langchain.chains import ConversationalRetrievalChain
 from langchain.memory import ConversationBufferMemory
@@ -170,7 +170,7 @@ def process_multi_question_query(
         chunk_size = MULTI_QUESTION_STREAM_CHUNK_SIZE
         for offset in range(0, len(combined_answer), chunk_size):
             stream_handler.on_llm_new_token(
-                combined_answer[offset:offset + chunk_size],
+                combined_answer[offset : offset + chunk_size],
             )
         stream_handler.finalize()
 

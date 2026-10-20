@@ -22,7 +22,7 @@ import os
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 import numpy as np
 
@@ -43,11 +43,11 @@ class CachedAnswer:
 
     question: str
     answer: str
-    sources: list[dict]
+    sources: list[dict[str, Any]]
     timestamp: str = field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
     embedding: list[float] | None = None
 
-    def to_dict(self) -> dict:
+    def to_dict(self) -> dict[str, Any]:
         """Serialise to a JSON-safe dictionary (excludes embedding)."""
         return {
             "question": self.question,
@@ -74,7 +74,7 @@ class CacheManager:
         self.threshold = threshold
 
         # Tier 1: in-memory cache keyed by MD5 hash
-        self._memory_cache: dict[str, dict] = {}
+        self._memory_cache: dict[str, dict[str, Any]] = {}
 
         # Tier 3: dense embedding matrix for fast vectorised cosine similarity
         self._embeddings: dict[str, list[float]] = {}
@@ -92,7 +92,7 @@ class CacheManager:
         question: str,
         document_names: list[str],
         embeddings_model: Embeddings | None = None,
-    ) -> tuple[dict | None, float]:
+    ) -> tuple[dict[str, Any] | None, float]:
         """Look up a cached answer using the 3-tier strategy.
 
         Args:
@@ -119,9 +119,9 @@ class CacheManager:
 
         if answer_path.exists() and embedding_path.exists():
             try:
-                with open(answer_path, "r", encoding="utf-8") as f:
+                with open(answer_path, encoding="utf-8") as f:
                     answer_data = json.load(f)
-                with open(embedding_path, "r", encoding="utf-8") as f:
+                with open(embedding_path, encoding="utf-8") as f:
                     embedding_data = json.load(f)
 
                 # Promote to memory for future lookups
@@ -144,7 +144,7 @@ class CacheManager:
         self,
         question: str,
         answer: str,
-        sources: list[dict],
+        sources: list[dict[str, Any]],
         document_names: list[str],
         embeddings_model: Embeddings,
     ) -> None:
@@ -238,9 +238,9 @@ class CacheManager:
                 continue
 
             try:
-                with open(answer_path, "r", encoding="utf-8") as f:
+                with open(answer_path, encoding="utf-8") as f:
                     answer_data = json.load(f)
-                with open(entry.path, "r", encoding="utf-8") as f:
+                with open(entry.path, encoding="utf-8") as f:
                     embedding_data = json.load(f)
 
                 self._memory_cache[cache_key] = answer_data
@@ -282,7 +282,7 @@ class CacheManager:
         self,
         question: str,
         embeddings_model: Embeddings,
-    ) -> tuple[dict | None, float]:
+    ) -> tuple[dict[str, Any] | None, float]:
         """Tier 3: find the most semantically similar cached question."""
         self.load_index_from_disk()
 

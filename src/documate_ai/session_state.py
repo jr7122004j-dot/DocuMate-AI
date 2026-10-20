@@ -29,7 +29,7 @@ def initialise_session_state() -> None:
         - ``processed_pdf_names``: Set of already-processed PDF filenames
         - ``debug_mode``: Whether to show debug info in the UI
     """
-    defaults: dict = {
+    defaults: dict[str, object] = {
         "chat_history": [],
         "uploaded_pdfs": [],
         "vector_store": None,

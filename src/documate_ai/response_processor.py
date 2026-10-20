@@ -8,7 +8,7 @@ document chunks' metadata (source filename + page number).
 from __future__ import annotations
 
 import re
-from typing import Any, TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 from documate_ai.config import SOURCE_CONTENT_PREVIEW_LENGTH
 from documate_ai.question_parser import remove_question_repetition
@@ -63,10 +63,7 @@ def format_citations(source_documents: list[Document]) -> str:
 
     citation_text = "\n\n\nSources:\n"
     for index, source_info in enumerate(unique_sources.values(), start=1):
-        citation_text += (
-            f"{index}. {source_info['source']}, "
-            f"page {source_info['page']}\n"
-        )
+        citation_text += f"{index}. {source_info['source']}, page {source_info['page']}\n"
     return citation_text
 
 
@@ -135,7 +132,7 @@ def extract_source_metadata(source_documents: list[Document]) -> list[dict]:
         ``"page"`` (int), and ``"content"`` (preview snippet).
     """
     seen: set[str] = set()
-    results: list[dict] = []
+    results: list[dict[str, Any]] = []
 
     for doc in source_documents:
         source_name = doc.metadata.get("source", "Unknown Document")
@@ -145,10 +142,12 @@ def extract_source_metadata(source_documents: list[Document]) -> list[dict]:
         if dedup_key not in seen:
             seen.add(dedup_key)
             content_preview = doc.page_content[:SOURCE_CONTENT_PREVIEW_LENGTH]
-            results.append({
-                "source": source_name,
-                "page": page_number,
-                "content": content_preview,
-            })
+            results.append(
+                {
+                    "source": source_name,
+                    "page": page_number,
+                    "content": content_preview,
+                }
+            )
 
     return results

@@ -13,16 +13,16 @@ from __future__ import annotations
 import logging
 import os
 import tempfile
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, cast
 
+from langchain_chroma import Chroma
 from langchain_community.document_loaders import PyPDFLoader
 from langchain_text_splitters import RecursiveCharacterTextSplitter
-from langchain_chroma import Chroma
 
 from documate_ai.config import (
-    CHUNK_SIZE,
-    CHUNK_OVERLAP,
     CHROMA_PERSIST_DIRECTORY,
+    CHUNK_OVERLAP,
+    CHUNK_SIZE,
 )
 
 if TYPE_CHECKING:
@@ -52,7 +52,7 @@ def load_pdf(pdf_bytes: bytes, filename: str) -> list[Document]:
 
     try:
         loader = PyPDFLoader(temp_path)
-        documents = loader.load()
+        documents = cast("list[Document]", loader.load())
     finally:
         try:
             os.remove(temp_path)
@@ -63,9 +63,7 @@ def load_pdf(pdf_bytes: bytes, filename: str) -> list[Document]:
     for document in documents:
         document.metadata["source"] = filename
 
-    logger.info(
-        "Loaded %d pages from '%s'", len(documents), filename
-    )
+    logger.info("Loaded %d pages from '%s'", len(documents), filename)
     return documents
 
 
@@ -88,7 +86,7 @@ def split_documents(documents: list[Document]) -> list[Document]:
         chunk_overlap=CHUNK_OVERLAP,
         length_function=len,
     )
-    chunks = text_splitter.split_documents(documents)
+    chunks = cast("list[Document]", text_splitter.split_documents(documents))
     logger.info(
         "Split %d pages into %d chunks (size=%d, overlap=%d)",
         len(documents),
@@ -155,7 +153,5 @@ def process_pdfs(
         chunks = split_documents(documents)
         all_chunks.extend(chunks)
 
-    logger.info(
-        "Total: %d chunks from %d PDF(s)", len(all_chunks), len(pdf_files)
-    )
+    logger.info("Total: %d chunks from %d PDF(s)", len(all_chunks), len(pdf_files))
     return create_vector_store(all_chunks, embeddings)

@@ -22,7 +22,6 @@ import streamlit as st
 
 from documate_ai.session_state import initialise_session_state
 
-
 # ---------------------------------------------------------------------------
 # Page configuration (must be the first Streamlit command)
 # ---------------------------------------------------------------------------
@@ -37,7 +36,6 @@ st.set_page_config(
 
 def main() -> None:
     """Main application loop."""
-
     # Ensure all session state keys exist
     initialise_session_state()
 
@@ -123,7 +121,6 @@ def main() -> None:
 
     # Chat input
     if prompt := st.chat_input("Ask a question about your documents..."):
-
         # Display user message
         with st.chat_message("user"):
             st.markdown(prompt)
@@ -148,9 +145,7 @@ def main() -> None:
                 # TODO: Format response with citations
                 # TODO: Save to cache
 
-                response_container.markdown(
-                    "_Response generation not yet implemented._"
-                )
+                response_container.markdown("_Response generation not yet implemented._")
 
             st.session_state.chat_history.append(
                 ("assistant", "_Response generation not yet implemented._")
