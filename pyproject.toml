@@ -42,3 +42,60 @@ pythonpath = ["src"]
 markers = [
     "ollama: requires a running Ollama server",
 ]
+
+[tool.ruff]
+target-version = "py310"
+line-length = 100
+exclude = ["OLD", ".knowledge", ".venv", ".git"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "B", "UP", "SIM", "D"]
+ignore = [
+    # D1xx rules require docstrings on every public member.
+    # We document public API; private helpers are excluded below.
+    "D100",  # Missing docstring in public module  (handled per-file below)
+    "D104",  # Missing docstring in public package
+    "D107",  # Missing docstring in __init__
+]
+
+[tool.ruff.lint.per-file-ignores]
+# Test files: don't enforce docstrings on every test function
+"test/**/*.py" = ["D", "S"]
+"test/*.py"    = ["D", "S"]
+
+[tool.ruff.lint.pydocstyle]
+convention = "google"
+
+[tool.mypy]
+python_version = "3.10"
+disallow_untyped_defs = true
+warn_unused_ignores = true
+warn_return_any = true
+strict_optional = true
+
+# Third-party packages that ship no stubs or are only in the project venv
+[[tool.mypy.overrides]]
+module = [
+    "chromadb.*",
+    "streamlit.*",
+    "ollama.*",
+    "langchain.*",
+    "langchain_core.*",
+    "langchain_ollama.*",
+    "langchain_chroma.*",
+    "langchain_community.*",
+    "langchain_text_splitters.*",
+    "numpy.*",
+]
+ignore_missing_imports = true
+
+# conversation.py: removed in T12 (LCEL rewrite)
+# app.py: removed in T18 (chat panel rewrite)
+[[tool.mypy.overrides]]
+module = ["documate_ai.conversation", "documate_ai.app"]
+ignore_errors = true
+
+# Tests do not require explicit return type annotations
+[[tool.mypy.overrides]]
+module = ["test.*"]
+disallow_untyped_defs = false
