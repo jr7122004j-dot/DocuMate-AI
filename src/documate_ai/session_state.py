@@ -9,6 +9,8 @@ from __future__ import annotations
 
 import streamlit as st
 
+from documate_ai.config import get_settings
+
 
 def initialise_session_state() -> None:
     """Set default values for all Streamlit session state keys.
@@ -29,6 +31,7 @@ def initialise_session_state() -> None:
         - ``processed_pdf_names``: Set of already-processed PDF filenames
         - ``debug_mode``: Whether to show debug info in the UI
     """
+    settings = get_settings()
     defaults: dict[str, object] = {
         "chat_history": [],
         "uploaded_pdfs": [],
@@ -38,7 +41,7 @@ def initialise_session_state() -> None:
         "llm": None,
         "cache_manager": None,
         "cache_enabled": True,
-        "similarity_threshold": 0.95,
+        "similarity_threshold": settings.similarity_threshold,
         "processed_pdf_names": set(),
         "debug_mode": False,
     }

@@ -20,6 +20,8 @@ from __future__ import annotations
 
 import streamlit as st
 
+from documate_ai.config import get_settings
+from documate_ai.logging_config import configure_logging
 from documate_ai.session_state import initialise_session_state
 
 # ---------------------------------------------------------------------------
@@ -36,6 +38,9 @@ st.set_page_config(
 
 def main() -> None:
     """Main application loop."""
+    settings = get_settings()
+    configure_logging(level=settings.log_level)
+
     # Ensure all session state keys exist
     initialise_session_state()
 
@@ -82,10 +87,10 @@ def main() -> None:
         if st.session_state.cache_enabled:
             st.session_state.similarity_threshold = st.slider(
                 "Similarity threshold",
-                min_value=0.50,
-                max_value=0.99,
+                min_value=settings.similarity_slider_min,
+                max_value=settings.similarity_slider_max,
                 value=st.session_state.similarity_threshold,
-                step=0.01,
+                step=settings.similarity_slider_step,
                 help="Higher = stricter matching. Lower = more cache hits.",
             )
 

@@ -10,14 +10,14 @@ from __future__ import annotations
 import re
 from typing import TYPE_CHECKING, Any
 
-from documate_ai.config import SOURCE_CONTENT_PREVIEW_LENGTH
+from documate_ai.config import NO_INFO_RESPONSE, SOURCE_CONTENT_PREVIEW_LENGTH
 from documate_ai.question_parser import remove_question_repetition
 
 if TYPE_CHECKING:
     from langchain_core.documents import Document
 
 # Sentinel patterns for "I don't know" responses
-_NO_INFO_EXACT = "I don't have enough information to answer this question."
+_NO_INFO_EXACT = NO_INFO_RESPONSE
 _NO_INFO_MARKER = "don't have enough information"
 _NO_INFO_SPLIT_PATTERN = re.compile(
     r"(I don't have enough information to answer [^.]*\.)",

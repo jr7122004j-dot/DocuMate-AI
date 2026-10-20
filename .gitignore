@@ -31,9 +31,11 @@ chroma_data/
 chroma_db/
 *.db
 
-# Semantic cache
+# Semantic cache & application data
 cache/
+data/
 .streamlit/
+.pytest_cache/
 
 # Environment variables
 .env
