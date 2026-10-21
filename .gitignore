@@ -39,3 +39,7 @@ data/
 
 # Environment variables
 .env
+
+# Coverage
+.coverage
+htmlcov/

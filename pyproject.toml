@@ -7,7 +7,7 @@ name = "DocuMate-AI"
 version = "0.1.0"
 description = "DocuMate-AI is an intelligent, on-device PDF analysis chatbot built with LangChain and Ollama, providing private, scalable document intelligence through semantic caching and pinpoint citations."
 readme = "README.md"
-requires-python = ">=3.10"
+requires-python = ">=3.10,<3.14"
 license = { text = "MIT" }
 
 dependencies = [
