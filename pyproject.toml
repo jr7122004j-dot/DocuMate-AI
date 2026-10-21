@@ -32,6 +32,7 @@ dev = [
     "ruff",
     "mypy",
     "pre-commit",
+    "reportlab",
 ]
 
 [tool.hatch.build.targets.wheel]
@@ -40,9 +41,20 @@ packages = ["src/documate_ai"]
 [tool.pytest.ini_options]
 testpaths = ["test"]
 pythonpath = ["src"]
+addopts = "--cov=src/documate_ai --cov-report=term-missing"
 markers = [
     "ollama: requires a running Ollama server",
 ]
+
+[tool.coverage.run]
+source = ["src/documate_ai"]
+branch = true
+omit = [
+    "*/__pycache__/*",
+]
+
+[tool.coverage.report]
+show_missing = true
 
 [tool.ruff]
 target-version = "py310"
@@ -81,6 +93,8 @@ module = [
     "chromadb.*",
     "streamlit.*",
     "ollama.*",
+    "pypdf.*",
+    "reportlab.*",
     "langchain.*",
     "langchain_core.*",
     "langchain_ollama.*",
