@@ -151,7 +151,7 @@ def main() -> None:
 
                 response_container.markdown("_Response generation not yet implemented._")
 
-            st.session_state.chat_history(
+            st.session_state.chat_history.append(
                 ("assistant", "_Response generation not yet implemented._")
             )
 
