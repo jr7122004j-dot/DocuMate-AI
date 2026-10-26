@@ -50,13 +50,12 @@ def main() -> None:
     with st.sidebar:
         st.title("📄 DocuMate-AI")
         st.caption("Intelligent, on-device PDF analysis")
-
         st.divider()
 
         # PDF Upload
         st.subheader("Upload Documents")
         uploaded_files = st.file_uploader(
-            "Choose PDF files",
+            "Select PDF files to upload",
             type=["pdf"],
             accept_multiple_files=True,
             help="Upload one or more PDF files to analyse.",
