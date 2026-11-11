@@ -60,6 +60,11 @@ class Settings(BaseSettings):
     llm_num_ctx: int = 4096
     """Context window size (number of tokens) configured for the chat model."""
 
+    @property
+    def num_ctx(self) -> int:
+        """Alias for llm_num_ctx for compatibility."""
+        return self.llm_num_ctx
+
     # ---------------------------------------------------------------------------
     # Document processing & ingestion limits
     # ---------------------------------------------------------------------------
