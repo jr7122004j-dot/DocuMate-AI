@@ -7,7 +7,7 @@ name = "DocuMate-AI"
 version = "0.1.0"
 description = "DocuMate-AI is an intelligent, on-device PDF analysis chatbot built with LangChain and Ollama, providing private, scalable document intelligence through semantic caching and pinpoint citations."
 readme = "README.md"
-requires-python = ">=3.10,<3.14"
+requires-python = ">=3.10,<3.15"
 license = { text = "MIT" }
 
 dependencies = [
@@ -29,9 +29,7 @@ dependencies = [
 dev = [
     "pytest",
     "pytest-cov",
-    "ruff",
     "mypy",
-    "pre-commit",
     "reportlab",
 ]
 
@@ -55,29 +53,6 @@ omit = [
 
 [tool.coverage.report]
 show_missing = true
-
-[tool.ruff]
-target-version = "py310"
-line-length = 100
-exclude = ["OLD", ".knowledge", ".venv", ".git"]
-
-[tool.ruff.lint]
-select = ["E", "F", "I", "B", "UP", "SIM", "D"]
-ignore = [
-    # D1xx rules require docstrings on every public member.
-    # We document public API; private helpers are excluded below.
-    "D100",  # Missing docstring in public module  (handled per-file below)
-    "D104",  # Missing docstring in public package
-    "D107",  # Missing docstring in __init__
-]
-
-[tool.ruff.lint.per-file-ignores]
-# Test files: don't enforce docstrings on every test function
-"test/**/*.py" = ["D", "S"]
-"test/*.py"    = ["D", "S"]
-
-[tool.ruff.lint.pydocstyle]
-convention = "google"
 
 [tool.mypy]
 python_version = "3.10"
