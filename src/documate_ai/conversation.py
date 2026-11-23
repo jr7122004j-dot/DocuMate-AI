@@ -104,9 +104,9 @@ def ask_question(
 
     if "source_documents" in result:
         result["answer"] = format_response_with_citations(
-            result["answer"],
-            result.get("source_documents"),
-            question,
+            answer=result["answer"],
+            source_documents=result.get("source_documents"),
+            question=question,
         )
 
     return result
@@ -147,9 +147,9 @@ def process_multi_question_query(
     for question in questions:
         result = chain({"question": question}, callbacks=None)
         processed_answer = format_response_with_citations(
-            result["answer"],
-            result.get("source_documents", []),
-            question,
+            answer=result["answer"],
+            source_documents=result.get("source_documents", []),
+            question=question,
         )
         individual_answers.append((question, processed_answer))
         if "source_documents" in result:
