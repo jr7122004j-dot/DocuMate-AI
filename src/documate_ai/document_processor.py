@@ -303,15 +303,15 @@ def create_vector_store(
     embeddings: Embeddings,
     persist_directory: str | None = None,
 ) -> Any:
-    """Embed document chunks and store them in ChromaDB."""
-    from langchain_chroma import Chroma
+    """Embed document chunks and store them in ChromaDB.
 
-    directory = persist_directory or str(CHROMA_PERSIST_DIRECTORY)
-    return Chroma.from_documents(
-        documents=chunks,
-        embedding=embeddings,
-        persist_directory=directory,
-    )
+    .. deprecated::
+        Use :func:`documate_ai.vector_store.get_or_create_vector_store`
+        for fingerprint-keyed, idempotent vector store management.
+    """
+    from documate_ai.vector_store import get_or_create_vector_store as _create
+
+    return _create(chunks, embeddings)
 
 
 def process_pdfs(
@@ -319,6 +319,13 @@ def process_pdfs(
     embeddings: Embeddings,
     settings: Settings | None = None,
 ) -> Any:
-    """End-to-end pipeline: ingest multiple PDFs into a single Chroma vector store."""
-    chunks, _ = process_pdf_bytes(pdf_files, settings)
-    return create_vector_store(chunks, embeddings)
+    """End-to-end pipeline: ingest multiple PDFs into a single Chroma vector store.
+
+    .. deprecated::
+        Prefer calling :func:`process_pdf_bytes` and
+        :func:`documate_ai.vector_store.get_or_create_vector_store` separately.
+    """
+    chunks, summary = process_pdf_bytes(pdf_files, settings)
+    from documate_ai.vector_store import get_or_create_vector_store as _create
+
+    return _create(chunks, embeddings, settings=settings, fingerprint=summary.document_fingerprint)
