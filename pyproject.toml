@@ -11,7 +11,6 @@ requires-python = ">=3.10,<3.15"
 license = { text = "MIT" }
 
 dependencies = [
-    "langchain~=1.2.0",
     "langchain-core~=1.2.0",
     "langchain-community~=0.4.0",
     "langchain-ollama~=1.0.0",
@@ -84,10 +83,9 @@ module = [
 ]
 ignore_missing_imports = true
 
-# conversation.py: removed in T12 (LCEL rewrite)
 # app.py: removed in T18 (chat panel rewrite)
 [[tool.mypy.overrides]]
-module = ["documate_ai.conversation", "documate_ai.app"]
+module = ["documate_ai.app"]
 ignore_errors = true
 
 # Tests do not require explicit return type annotations
