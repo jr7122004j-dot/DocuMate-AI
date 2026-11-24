@@ -37,19 +37,22 @@ def test_cache_manager_creation() -> None:
 
 
 def test_cache_key_deterministic() -> None:
-    """Same inputs should produce the same MD5 cache key."""
+    """Same inputs should produce the same SHA-256 cache key."""
     from documate_ai.cache_manager import CacheManager
 
-    key1 = CacheManager._make_cache_key("what is revenue", ["report.pdf"])
-    key2 = CacheManager._make_cache_key("what is revenue", ["report.pdf"])
+    fingerprint = "a" * 64
+    key1 = CacheManager._make_cache_key("what is revenue", fingerprint)
+    key2 = CacheManager._make_cache_key("what is revenue", fingerprint)
     assert key1 == key2
-    assert len(key1) == 32  # MD5 hex digest is always 32 chars
+    assert len(key1) == 64  # SHA-256 hex digest is always 64 chars
 
 
 def test_cache_key_differs_for_different_docs() -> None:
-    """Different document names should produce different cache keys."""
+    """Different document fingerprints should produce different cache keys."""
     from documate_ai.cache_manager import CacheManager
 
-    key1 = CacheManager._make_cache_key("what is revenue", ["report.pdf"])
-    key2 = CacheManager._make_cache_key("what is revenue", ["other.pdf"])
+    fp1 = "a" * 64
+    fp2 = "b" * 64
+    key1 = CacheManager._make_cache_key("what is revenue", fp1)
+    key2 = CacheManager._make_cache_key("what is revenue", fp2)
     assert key1 != key2
