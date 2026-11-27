@@ -29,6 +29,13 @@ from documate_ai.config import (
     Settings,
     get_settings,
 )
+from documate_ai.question_parser import detect_multiple_questions
+from documate_ai.response_processor import (
+    build_citations,
+    format_response_with_citations,
+    render_citations_markdown,
+)
+from documate_ai.schemas import Citation
 from documate_ai.stream_handler import TokenSink
 from documate_ai.vector_store import build_retriever
 
@@ -305,3 +312,243 @@ def stream_answer(
     yield from chain.stream_answer(
         question, history=history, out_result=out_result, sink=sink
     )
+
+
+# ---------------------------------------------------------------------------
+# Multi-Question Query Processing
+# ---------------------------------------------------------------------------
+
+
+def _snapshot_history(history: ChatHistory | None) -> ChatHistory | None:
+    """Create an isolated snapshot of ChatHistory for sub-question evaluation.
+
+    Args:
+        history: The source ChatHistory, or None.
+
+    Returns:
+        A new ChatHistory instance with identical messages, or None.
+    """
+    if history is None:
+        return None
+    snapshot = ChatHistory(max_turns=history.max_turns)
+    snapshot.messages = list(history.messages)
+    return snapshot
+
+
+def _deduplicate_docs(docs: list[Document]) -> list[Document]:
+    """Deduplicate Document objects preserving retrieval order.
+
+    Deduplicates by (source, page, content_prefix) tuple.
+
+    Args:
+        docs: List of Document chunks.
+
+    Returns:
+        Deduplicated list of Document chunks.
+    """
+    seen: set[tuple[str, int, str]] = set()
+    unique_docs: list[Document] = []
+    for doc in docs:
+        source = str(doc.metadata.get("source") or "Unknown Document")
+        raw_page = doc.metadata.get("page", 1)
+        try:
+            page = int(raw_page)
+        except (ValueError, TypeError):
+            page = 1
+        key = (source, page, doc.page_content[:150])
+        if key not in seen:
+            seen.add(key)
+            unique_docs.append(doc)
+    return unique_docs
+
+
+def _format_sub_question_heading(question: str) -> str:
+    """Format a question string into a markdown heading.
+
+    Ensures a trailing question mark and '### ' markdown heading prefix.
+
+    Args:
+        question: Raw question string.
+
+    Returns:
+        Markdown heading string (e.g. '### What is the revenue?').
+    """
+    norm = question.strip()
+    if not norm.endswith("?"):
+        norm += "?"
+    if not norm.startswith("#"):
+        norm = f"### {norm}"
+    return norm
+
+
+def process_multi_question_query(
+    chain: ConversationalRAG,
+    prompt: str,
+    history: ChatHistory | None = None,
+    sink: TokenSink | None = None,
+    settings: Settings | None = None,
+    max_sub_questions: int | None = None,
+    stream_handler: TokenSink | None = None,
+) -> dict[str, Any]:
+    """Detect and process multiple questions within a single user prompt.
+
+    If only a single question is detected, it is forwarded through the standard
+    chain. When multiple questions are detected, each sub-question is answered
+    against the SAME initial chat history snapshot to prevent history pollution.
+    Each sub-answer is streamed live under a markdown heading through the TokenSink
+    (if provided). Finally, a single combined turn is appended to history.
+
+    Args:
+        chain: The ConversationalRAG engine.
+        prompt: User input string (may contain multiple questions).
+        history: Optional ChatHistory instance.
+        sink: Optional TokenSink protocol implementer for live token streaming.
+        settings: Application settings.
+        max_sub_questions: Optional override for maximum sub-questions to process.
+        stream_handler: Backwards-compatible alias for ``sink``.
+
+    Returns:
+        Dict compatible with ``ChatResponse`` containing:
+            - ``"answer"``: Combined answer string with headings and citations.
+            - ``"source_documents"``: Deduplicated list of retrieved Documents.
+            - ``"citations"``: Combined, deduplicated Citation list.
+            - ``"sub_questions"``: List of processed sub-question strings.
+            - ``"sub_answers"``: List of per-sub-question result dicts.
+    """
+    if sink is None and stream_handler is not None:
+        sink = stream_handler
+
+    if settings is None:
+        settings = (
+            chain.settings
+            if hasattr(chain, "settings") and chain.settings is not None
+            else get_settings()
+        )
+
+    is_multi, questions = detect_multiple_questions(prompt)
+
+    # ------------------------------------------------------------------
+    # Single-question path
+    # ------------------------------------------------------------------
+    if not is_multi or len(questions) <= 1:
+        if sink is not None:
+            out_res: dict[str, Any] = {}
+            for _ in chain.stream_answer(
+                prompt, history=history, out_result=out_res, sink=sink
+            ):
+                pass
+            raw_answer = out_res.get("answer", "")
+            source_docs = out_res.get("source_documents", [])
+            standalone_q = out_res.get("standalone_question", prompt)
+        else:
+            res = chain.invoke(prompt, history=history)
+            raw_answer = res.get("answer", "")
+            source_docs = res.get("source_documents", [])
+            standalone_q = res.get("standalone_question", prompt)
+
+        final_answer = format_response_with_citations(
+            answer=raw_answer,
+            source_documents=source_docs,
+            question=prompt,
+        )
+        citations = build_citations(source_docs)
+
+        if history is not None:
+            history.add_turn(prompt, final_answer)
+
+        return {
+            "answer": final_answer,
+            "source_documents": source_docs,
+            "citations": citations,
+            "sub_questions": [prompt],
+            "standalone_question": standalone_q,
+            "sub_answers": [
+                {
+                    "question": prompt,
+                    "answer": final_answer,
+                    "citations": citations,
+                    "source_documents": source_docs,
+                }
+            ],
+        }
+
+    # ------------------------------------------------------------------
+    # Multi-question path
+    # ------------------------------------------------------------------
+    max_q = (
+        max_sub_questions
+        if max_sub_questions is not None
+        else settings.max_sub_questions
+    )
+    if len(questions) > max_q:
+        logger.info(
+            "Capping %d detected sub-questions to %d (max_sub_questions limit)",
+            len(questions),
+            max_q,
+        )
+        questions = questions[:max_q]
+
+    # Evaluate all sub-questions against the SAME history snapshot
+    history_snapshot = _snapshot_history(history)
+
+    combined_parts: list[str] = []
+    sub_results: list[dict[str, Any]] = []
+    all_source_docs: list[Document] = []
+
+    for i, sub_q in enumerate(questions):
+        heading = _format_sub_question_heading(sub_q)
+        heading_prefix = f"{heading}\n\n" if i == 0 else f"\n\n{heading}\n\n"
+
+        if sink is not None:
+            sink.on_token(heading_prefix)
+            sub_out: dict[str, Any] = {}
+            for _ in chain.stream_answer(
+                sub_q, history=history_snapshot, out_result=sub_out, sink=sink
+            ):
+                pass
+            raw_sub_ans = sub_out.get("answer", "")
+            sub_docs = sub_out.get("source_documents", [])
+            sub_standalone_q = sub_out.get("standalone_question", sub_q)
+            sub_citations = build_citations(sub_docs)
+            sub_citations_md = render_citations_markdown(sub_citations)
+            if sub_citations_md:
+                sink.on_token(sub_citations_md)
+        else:
+            sub_res = chain.invoke(sub_q, history=history_snapshot)
+            raw_sub_ans = sub_res.get("answer", "")
+            sub_docs = sub_res.get("source_documents", [])
+            sub_standalone_q = sub_res.get("standalone_question", sub_q)
+            sub_citations = build_citations(sub_docs)
+
+        sub_ans_formatted = format_response_with_citations(
+            answer=raw_sub_ans,
+            source_documents=sub_docs,
+            question=sub_q,
+        )
+        combined_parts.append(f"{heading}\n\n{sub_ans_formatted}")
+        sub_results.append(
+            {
+                "question": sub_q,
+                "answer": sub_ans_formatted,
+                "citations": sub_citations,
+                "source_documents": sub_docs,
+                "standalone_question": sub_standalone_q,
+            }
+        )
+        all_source_docs.extend(sub_docs)
+
+    combined_answer = "\n\n".join(combined_parts)
+    combined_citations = build_citations(all_source_docs)
+    deduped_source_docs = _deduplicate_docs(all_source_docs)
+
+    # Append exactly ONE combined turn to history
+    if history is not None:
+        history.add_turn(prompt, combined_answer)
+
+    return {
+        "answer": combined_answer,
+        "source_documents": deduped_source_docs,
+        "citations": combined_citations,
+        "sub_questions": questions,
+        "sub_answers": sub_results,
+    }

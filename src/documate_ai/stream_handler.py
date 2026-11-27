@@ -96,6 +96,11 @@ class CollectingSink:
         """Return a copy of the collected token list."""
         return list(self._tokens)
 
+    @property
+    def is_finalized(self) -> bool:
+        """Return True if the sink has been finalized."""
+        return self._finalized
+
 
 class StreamlitTokenSink:
     """Streams LLM tokens into a container with throttling and cursor effect.
@@ -144,6 +149,11 @@ class StreamlitTokenSink:
         if self._finalized and self._final_text is not None:
             return self._final_text
         return self._text
+
+    @property
+    def is_finalized(self) -> bool:
+        """Return True if the sink has been finalized."""
+        return self._finalized
 
     def on_token(self, token: str) -> None:
         """Accumulate token and render to container if render_interval elapsed.

@@ -116,6 +116,9 @@ class Settings(BaseSettings):
     chat_history_window: int = 5
     """Number of previous QA turns to include in conversational retrieval."""
 
+    max_sub_questions: int = 5
+    """Maximum number of sub-questions to process in a compound query."""
+
     stream_render_interval_seconds: float = 0.03
     """Minimum time between Streamlit UI updates during token streaming."""
 
@@ -174,6 +177,9 @@ class Settings(BaseSettings):
                 f"similarity_slider_min ({self.similarity_slider_min}) and "
                 f"similarity_slider_max ({self.similarity_slider_max})"
             )
+
+        if self.max_sub_questions <= 0:
+            raise ValueError("max_sub_questions must be positive")
 
         # Resolve cache and chroma paths relative to data_dir
         if self.cache_dir is None:
@@ -316,6 +322,7 @@ SIMILARITY_SLIDER_MAX: float = _settings.similarity_slider_max
 SIMILARITY_SLIDER_STEP: float = _settings.similarity_slider_step
 STREAM_RENDER_INTERVAL_SECONDS: float = _settings.stream_render_interval_seconds
 MULTI_QUESTION_STREAM_CHUNK_SIZE: int = _settings.multi_question_stream_chunk_size
+MAX_SUB_QUESTIONS: int = _settings.max_sub_questions
 SOURCE_CONTENT_PREVIEW_LENGTH: int = _settings.source_content_preview_length
 MIN_MEANINGFUL_WORD_LENGTH: int = _settings.min_meaningful_word_length
 QUESTION_OVERLAP_THRESHOLD: float = _settings.question_overlap_threshold

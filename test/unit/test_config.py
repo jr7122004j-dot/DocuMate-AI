@@ -47,6 +47,7 @@ def test_default_settings() -> None:
     assert settings.retriever_result_count == 3
     assert settings.max_pdf_pages == 500
     assert settings.max_upload_size_mb == 50
+    assert settings.max_sub_questions == 5
 
     assert settings.data_dir == Path("./data")
     assert settings.cache_dir in (Path("data/cache"), Path("./data/cache"))
@@ -67,6 +68,7 @@ def test_env_override(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setenv("DOCUMATE_CHUNK_SIZE", "800")
     monkeypatch.setenv("DOCUMATE_CHUNK_OVERLAP", "150")
     monkeypatch.setenv("DOCUMATE_SIMILARITY_THRESHOLD", "0.92")
+    monkeypatch.setenv("DOCUMATE_MAX_SUB_QUESTIONS", "8")
     monkeypatch.setenv("DOCUMATE_LOG_LEVEL", "DEBUG")
 
     settings = Settings()
@@ -75,6 +77,7 @@ def test_env_override(monkeypatch: pytest.MonkeyPatch) -> None:
     assert settings.chunk_size == 800
     assert settings.chunk_overlap == 150
     assert settings.similarity_threshold == 0.92
+    assert settings.max_sub_questions == 8
     assert settings.log_level == "DEBUG"
 
 
@@ -116,6 +119,15 @@ def test_validation_similarity_slider_bounds() -> None:
             similarity_slider_max=0.90,
             similarity_threshold=0.55,
         )
+
+
+def test_validation_max_sub_questions_positive() -> None:
+    """max_sub_questions must be strictly positive."""
+    with pytest.raises(ValidationError, match="max_sub_questions must be positive"):
+        Settings(max_sub_questions=0)
+
+    with pytest.raises(ValidationError, match="max_sub_questions must be positive"):
+        Settings(max_sub_questions=-2)
 
 
 def test_path_resolution_relative_to_data_dir() -> None:
