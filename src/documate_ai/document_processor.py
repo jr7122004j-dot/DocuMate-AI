@@ -30,19 +30,12 @@ from documate_ai.config import (
     get_settings,
 )
 from documate_ai.errors import DocumentProcessingError
+from documate_ai.schemas import UploadedPdf
 
 if TYPE_CHECKING:
     from langchain_core.embeddings import Embeddings
 
 logger = logging.getLogger(__name__)
-
-
-@dataclass
-class UploadedPdf:
-    """Represents an uploaded PDF file with its filename and raw byte content."""
-
-    name: str
-    data: bytes
 
 
 @dataclass

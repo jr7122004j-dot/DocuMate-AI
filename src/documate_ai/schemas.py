@@ -11,6 +11,30 @@ from typing import Any
 
 
 @dataclass
+class UploadedPdf:
+    """Represents an uploaded PDF file with its filename and raw byte content."""
+
+    name: str
+    data: bytes
+
+
+@dataclass
+class IngestReport:
+    """Summary report detailing PDF ingestion, extraction, and chunking results."""
+
+    files: list[str] = field(default_factory=list)
+    pages: int = 0
+    chunks: int = 0
+    skipped: dict[str, str] = field(default_factory=dict)
+    fingerprint: str = ""
+    elapsed_seconds: float = 0.0
+
+    def to_dict(self) -> dict[str, Any]:
+        """Convert the report to a plain dictionary."""
+        return asdict(self)
+
+
+@dataclass
 class Citation:
     """Structured citation referencing a specific page and snippet in a source document."""
 
