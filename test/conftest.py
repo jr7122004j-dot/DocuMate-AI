@@ -7,10 +7,14 @@ without requiring an active Ollama instance or Streamlit server.
 
 from __future__ import annotations
 
+import os
 import urllib.error
 import urllib.request
 from pathlib import Path
 from typing import Any
+
+# Ensure telemetry is disabled before any chromadb import across all tests
+os.environ.setdefault("ANONYMIZED_TELEMETRY", "False")
 
 import pytest
 from langchain_core.documents import Document
