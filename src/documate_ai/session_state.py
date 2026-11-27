@@ -1,51 +1,146 @@
-"""Streamlit session state initialisation.
+"""Streamlit session state management for DocuMate-AI.
 
-Declares all session state keys with their default values. This module
-is called once at app startup to ensure every key exists before any
-other module tries to access it.
+Maintains per-session state (DocuMateEngine, structured chat messages,
+cache settings, debug toggle, and health status) decoupled from application
+engine logic.
 """
 
 from __future__ import annotations
 
+import logging
+from typing import TYPE_CHECKING, Any
+
 import streamlit as st
 
-from documate_ai.config import get_settings
+from documate_ai.config import Settings, get_settings
+from documate_ai.ui.resources import create_engine
+
+if TYPE_CHECKING:
+    from documate_ai.engine import DocuMateEngine
+    from documate_ai.models import HealthReport
+
+logger = logging.getLogger(__name__)
 
 
-def initialise_session_state() -> None:
-    """Set default values for all Streamlit session state keys.
+def initialise_session_state(
+    settings: Settings | None = None,
+    engine: DocuMateEngine | None = None,
+) -> None:
+    """Initialise default values for all Streamlit session state keys.
 
-    This function is idempotent — calling it multiple times will not
-    overwrite values that have already been set by user interactions.
+    Idempotent: will not overwrite values that already exist in session state.
 
     Session state keys managed:
-        - ``chat_history``: List of (role, message) tuples
-        - ``uploaded_pdfs``: List of uploaded PDF file dicts
-        - ``vector_store``: The active ChromaDB vector store (or None)
-        - ``conversation_chain``: The active RAG chain (or None)
-        - ``embeddings``: The cached embedding model (or None)
-        - ``llm``: The cached LLM (or None)
-        - ``cache_manager``: The CacheManager instance (or None)
-        - ``cache_enabled``: Whether semantic caching is on
-        - ``similarity_threshold``: Current similarity threshold slider value
-        - ``processed_pdf_names``: Set of already-processed PDF filenames
-        - ``debug_mode``: Whether to show debug info in the UI
+        - ``engine``: The active per-session DocuMateEngine instance
+        - ``chat_messages``: List of structured message dicts (role, content,
+          citations, from_cache, similarity, timings)
+        - ``chat_history``: Backwards-compatible list of (role, content) tuples
+        - ``cache_enabled``: Boolean toggle for semantic caching
+        - ``similarity_threshold``: Similarity threshold slider value
+        - ``debug_mode``: Boolean toggle for debug metadata
+        - ``health_report``: Cached Ollama server health status
     """
-    settings = get_settings()
-    defaults: dict[str, object] = {
+    if settings is None:
+        settings = get_settings()
+
+    if "engine" not in st.session_state or st.session_state["engine"] is None:
+        st.session_state["engine"] = engine or create_engine(settings)
+
+    defaults: dict[str, Any] = {
+        "chat_messages": [],
         "chat_history": [],
-        "uploaded_pdfs": [],
-        "vector_store": None,
-        "conversation_chain": None,
-        "embeddings": None,
-        "llm": None,
-        "cache_manager": None,
         "cache_enabled": True,
         "similarity_threshold": settings.similarity_threshold,
-        "processed_pdf_names": set(),
         "debug_mode": False,
+        "health_report": None,
     }
 
     for key, default_value in defaults.items():
         if key not in st.session_state:
             st.session_state[key] = default_value
+
+
+def get_engine() -> DocuMateEngine:
+    """Retrieve the active DocuMateEngine from session state, initializing if needed."""
+    if "engine" not in st.session_state or st.session_state["engine"] is None:
+        initialise_session_state()
+    engine: DocuMateEngine = st.session_state["engine"]
+    return engine
+
+
+def add_chat_message(
+    role: str,
+    content: str,
+    *,
+    citations: list[Any] | None = None,
+    from_cache: bool = False,
+    similarity: float | None = None,
+    timings: dict[str, float] | None = None,
+) -> dict[str, Any]:
+    """Add a structured message dict to chat_messages in session state.
+
+    Args:
+        role: Message author ('user' or 'assistant').
+        content: Message markdown text.
+        citations: List of structured Citation objects or dicts.
+        from_cache: Whether the answer was returned from the cache.
+        similarity: Cosine similarity score if matched from semantic cache.
+        timings: Execution timing breakdown.
+
+    Returns:
+        The created message dictionary.
+    """
+    msg: dict[str, Any] = {
+        "role": role,
+        "content": content,
+        "citations": citations or [],
+        "from_cache": from_cache,
+        "similarity": similarity,
+        "timings": timings or {},
+    }
+
+    if "chat_messages" not in st.session_state:
+        st.session_state["chat_messages"] = []
+    st.session_state["chat_messages"].append(msg)
+
+    # Sync backwards-compatible chat_history
+    if "chat_history" not in st.session_state:
+        st.session_state["chat_history"] = []
+    st.session_state["chat_history"].append((role, content))
+
+    return msg
+
+
+def clear_chat() -> None:
+    """Clear both UI messages and the underlying engine's chat history."""
+    if "chat_messages" in st.session_state:
+        st.session_state["chat_messages"] = []
+    if "chat_history" in st.session_state:
+        st.session_state["chat_history"] = []
+
+    engine = st.session_state.get("engine")
+    if engine is not None and hasattr(engine, "clear_history"):
+        engine.clear_history()
+
+    logger.info("Chat cleared in UI session state and DocuMateEngine.")
+
+
+def reset_all(*, delete_store: bool = True) -> None:
+    """Reset the application session state, clearing the engine and vector store.
+
+    Args:
+        delete_store: Whether to delete the underlying Chroma collection from disk.
+    """
+    engine = st.session_state.get("engine")
+    if engine is not None and hasattr(engine, "reset"):
+        engine.reset(delete_store=delete_store)
+
+    settings = get_settings()
+    st.session_state["chat_messages"] = []
+    st.session_state["chat_history"] = []
+    st.session_state["cache_enabled"] = True
+    st.session_state["similarity_threshold"] = settings.similarity_threshold
+    st.session_state["debug_mode"] = False
+    st.session_state["health_report"] = None
+
+    logger.info("Application session state and engine reset.")
