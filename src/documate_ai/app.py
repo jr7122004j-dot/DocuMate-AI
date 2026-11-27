@@ -23,6 +23,7 @@ import streamlit as st
 from documate_ai.config import get_settings
 from documate_ai.logging_config import configure_logging
 from documate_ai.session_state import initialise_session_state
+from documate_ai.ui.sidebar import render_sidebar
 
 # ---------------------------------------------------------------------------
 # Page configuration (must be the first Streamlit command)
@@ -47,71 +48,7 @@ def main() -> None:
     # ------------------------------------------------------------------
     # Sidebar
     # ------------------------------------------------------------------
-    with st.sidebar:
-        st.title("📄 DocuMate-AI")
-        st.caption("Intelligent, on-device PDF analysis")
-        st.divider()
-
-        # PDF Upload
-        st.subheader("Upload Documents")
-        uploaded_files = st.file_uploader(
-            "Select PDF files to upload",
-            type=["pdf"],
-            accept_multiple_files=True,
-            help="Upload one or more PDF files to analyse.",
-        )
-
-        # Process button
-        process_clicked = st.button(
-            "⚙️ Process PDFs",
-            use_container_width=True,
-            disabled=not uploaded_files,
-        )
-
-        if process_clicked and uploaded_files:
-            with st.spinner("Processing PDFs..."):
-                # TODO: Call document_processor.process_pdfs()
-                # TODO: Call conversation.create_conversational_chain()
-                st.success(f"Processed {len(uploaded_files)} PDF(s)!")
-
-        st.divider()
-
-        # Cache settings
-        st.subheader("⚡ Cache Settings")
-        st.session_state.cache_enabled = st.toggle(
-            "Enable semantic caching",
-            value=st.session_state.cache_enabled,
-        )
-
-        if st.session_state.cache_enabled:
-            st.session_state.similarity_threshold = st.slider(
-                "Similarity threshold",
-                min_value=settings.similarity_slider_min,
-                max_value=settings.similarity_slider_max,
-                value=st.session_state.similarity_threshold,
-                step=settings.similarity_slider_step,
-                help="Higher = stricter matching. Lower = more cache hits.",
-            )
-
-        st.divider()
-
-        # Actions
-        col1, col2 = st.columns(2)
-        with col1:
-            if st.button("🗑️ Clear Chat", use_container_width=True):
-                st.session_state.chat_history = []
-                st.rerun()
-        with col2:
-            if st.button("🔄 Reset All", use_container_width=True):
-                for key in list(st.session_state.keys()):
-                    del st.session_state[key]
-                st.rerun()
-
-        # Debug toggle
-        st.session_state.debug_mode = st.checkbox(
-            "🐛 Debug mode",
-            value=st.session_state.debug_mode,
-        )
+    render_sidebar(settings=settings)
 
     # ------------------------------------------------------------------
     # Main chat panel
