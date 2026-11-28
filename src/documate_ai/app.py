@@ -1,18 +1,19 @@
 """DocuMate-AI — Streamlit application entry point.
 
-This is the main file that ties all modules together. Run with:
+Run with:
     streamlit run src/documate_ai/app.py
 
 UI Layout:
     ┌────────────────────┬──────────────────────────────────┐
     │  SIDEBAR           │  MAIN PANEL                      │
     │                    │                                  │
-    │  📄 PDF Upload     │  💬 Chat History                 │
-    │  ⚙️ Process PDFs   │     User messages                │
-    │  📋 Loaded PDFs    │     AI responses with citations  │
-    │  🗑️ Clear / Reset  │                                  │
-    │  ⚡ Cache Settings  │  ⌨️ User Input Box               │
-    │  🐛 Debug Toggle   │                                  │
+    │  🏥 Ollama Health  │  💬 Chat History                 │
+    │  📄 PDF Upload     │     User messages                │
+    │  ⚙️ Process PDFs   │     AI responses with citations  │
+    │  📋 Loaded PDFs    │     ⚡ Cache indicators           │
+    │  🗑️ Clear / Reset  │     🐛 Debug metadata            │
+    │  ⚡ Cache Settings  │                                  │
+    │  🐛 Debug Toggle   │  ⌨️ User Input Box               │
     └────────────────────┴──────────────────────────────────┘
 """
 
@@ -22,7 +23,8 @@ import streamlit as st
 
 from documate_ai.config import get_settings
 from documate_ai.logging_config import configure_logging
-from documate_ai.session_state import initialise_session_state
+from documate_ai.session_state import get_engine, initialise_session_state
+from documate_ai.ui.chat import render_chat
 from documate_ai.ui.sidebar import render_sidebar
 
 # ---------------------------------------------------------------------------
@@ -43,54 +45,20 @@ def main() -> None:
     configure_logging(level=settings.log_level)
 
     # Ensure all session state keys exist
-    initialise_session_state()
+    initialise_session_state(settings=settings)
+
+    # Retrieve engine
+    engine = get_engine()
 
     # ------------------------------------------------------------------
     # Sidebar
     # ------------------------------------------------------------------
-    render_sidebar(settings=settings)
+    render_sidebar(engine=engine, settings=settings)
 
     # ------------------------------------------------------------------
     # Main chat panel
     # ------------------------------------------------------------------
-    st.title("💬 Chat with your Documents")
-
-    # Render chat history
-    for role, message in st.session_state.chat_history:
-        with st.chat_message(role):
-            st.markdown(message)
-
-    # Chat input
-    if prompt := st.chat_input("Ask a question about your documents..."):
-        # Display user message
-        with st.chat_message("user"):
-            st.markdown(prompt)
-
-        # Add to history
-        st.session_state.chat_history.append(("user", prompt))
-
-        # Check if PDFs are loaded
-        if st.session_state.conversation_chain is None:
-            with st.chat_message("assistant"):
-                st.warning("Please upload and process PDF documents first.")
-            st.session_state.chat_history.append(
-                ("assistant", "⚠️ Please upload and process PDF documents first.")
-            )
-        else:
-            # Generate response
-            with st.chat_message("assistant"):
-                response_container = st.empty()
-
-                # TODO: Check cache first (if enabled)
-                # TODO: If cache miss, run conversation chain with StreamHandler
-                # TODO: Format response with citations
-                # TODO: Save to cache
-
-                response_container.markdown("_Response generation not yet implemented._")
-
-            st.session_state.chat_history.append(
-                ("assistant", "_Response generation not yet implemented._")
-            )
+    render_chat(engine=engine, settings=settings)
 
 
 if __name__ == "__main__":

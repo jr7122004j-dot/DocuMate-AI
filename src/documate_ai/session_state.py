@@ -76,6 +76,9 @@ def add_chat_message(
     from_cache: bool = False,
     similarity: float | None = None,
     timings: dict[str, float] | None = None,
+    matched_question: str | None = None,
+    standalone_question: str | None = None,
+    sub_questions: list[str] | None = None,
 ) -> dict[str, Any]:
     """Add a structured message dict to chat_messages in session state.
 
@@ -86,6 +89,9 @@ def add_chat_message(
         from_cache: Whether the answer was returned from the cache.
         similarity: Cosine similarity score if matched from semantic cache.
         timings: Execution timing breakdown.
+        matched_question: The cached question matched if from cache.
+        standalone_question: Condensed standalone question if follow-up.
+        sub_questions: List of split sub-questions if multi-question.
 
     Returns:
         The created message dictionary.
@@ -97,6 +103,9 @@ def add_chat_message(
         "from_cache": from_cache,
         "similarity": similarity,
         "timings": timings or {},
+        "matched_question": matched_question,
+        "standalone_question": standalone_question,
+        "sub_questions": sub_questions or [],
     }
 
     if "chat_messages" not in st.session_state:

@@ -83,11 +83,6 @@ module = [
 ]
 ignore_missing_imports = true
 
-# app.py: removed in T18 (chat panel rewrite)
-[[tool.mypy.overrides]]
-module = ["documate_ai.app"]
-ignore_errors = true
-
 # Tests do not require explicit return type annotations
 [[tool.mypy.overrides]]
 module = ["test.*"]

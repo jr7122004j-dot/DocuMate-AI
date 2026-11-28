@@ -156,6 +156,22 @@ class TestChatMessageManagement:
         assert st.session_state["chat_messages"][-1] == msg
         assert st.session_state["chat_history"][-1] == ("assistant", "Revenue was $50 million.")
 
+    def test_add_chat_message_with_debug_metadata(self) -> None:
+        """add_chat_message preserves matched, standalone, and sub-questions."""
+        msg = add_chat_message(
+            role="assistant",
+            content="Answer text",
+            matched_question="Cached Q?",
+            standalone_question="Condensed Q?",
+            sub_questions=["Sub Q1?", "Sub Q2?"],
+        )
+
+        assert msg["matched_question"] == "Cached Q?"
+        assert msg["standalone_question"] == "Condensed Q?"
+        assert msg["sub_questions"] == ["Sub Q1?", "Sub Q2?"]
+        assert msg["citations"] == []
+        assert msg["timings"] == {}
+
     def test_clear_chat_empties_ui_and_engine_history(
         self,
         fake_engine: DocuMateEngine,
