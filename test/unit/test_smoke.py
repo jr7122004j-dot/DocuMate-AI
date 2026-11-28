@@ -14,8 +14,8 @@ from documate_ai.config import (
 
 
 def test_version() -> None:
-    """Package version should be set."""
-    assert __version__ == "0.1.0"
+    """Package version should be set to 1.0.0."""
+    assert __version__ == "1.0.0"
 
 
 def test_config_values_are_sane() -> None:
