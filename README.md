@@ -1,4 +1,7 @@
 # DocuMate-AI
+
+[![CI](https://github.com/jr7122004j-dot/DocuMate-AI/actions/workflows/ci.yml/badge.svg)](https://github.com/jr7122004j-dot/DocuMate-AI/actions/workflows/ci.yml)
+
 A secure, on-device RAG chatbot for multi-PDF analysis built with Python, LangChain, and Ollama, featuring semantic caching and precise source citations.
 
 
